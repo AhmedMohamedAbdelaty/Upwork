@@ -29,6 +29,9 @@ application:
         jwt-cookie-name: ${JWT_COOKIE_NAME}
         jwt-refresh-cookie-name: ${JWT_REFRESH_COOKIE_NAME}
         max-age: ${JWT_COOKIE_MAX_AGE}
+      automatic-refresh:
+        enabled: true
+        interval: 30000 # 30 seconds, for testing
 
 springdoc:
   api-docs:

@@ -142,4 +142,19 @@ public class JwtService {
         return Jwts.parserBuilder().setSigningKey(getKey()).build()
                 .parseClaimsJws(token).getBody().getSubject();
     }
+
+    public boolean isTokenExpired(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token);
+            return false;
+        } catch (ExpiredJwtException e) {
+            return true;
+        }
+    }
+
+    public String refreshJwtToken(String refreshToken) {
+        String username = getUserNameFromJwtToken(refreshToken);
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(username, "", new ArrayList<>());
+        return generateAccessToken(userDetails);
+    }
 }

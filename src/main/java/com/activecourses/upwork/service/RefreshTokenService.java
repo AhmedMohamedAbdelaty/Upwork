@@ -125,4 +125,18 @@ public class RefreshTokenService {
     public int deleteByUserId(int userId) {
         return refreshTokenRepository.deleteByUserId(userId);
     }
+
+    public void handleAutomaticTokenRefresh(HttpServletRequest request) {
+        String refreshToken = getRefreshTokenFromRequest(request);
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            RefreshToken refreshTokenEntity = getRefreshTokenEntity(refreshToken);
+            verifyExpiration(refreshTokenEntity);
+
+            // Delete all refresh tokens of the user
+            deleteByUserId(refreshTokenEntity.getUser().getId());
+
+            // Generate new refresh token
+            createRefreshToken(refreshTokenEntity.getUser().getId());
+        }
+    }
 }

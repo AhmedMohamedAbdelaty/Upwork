@@ -3,6 +3,7 @@ package com.activecourses.upwork.config.security.jwt;
 import java.io.IOException;
 
 import com.activecourses.upwork.config.security.CustomUserDetailsService;
+import com.activecourses.upwork.service.RefreshTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,25 +26,32 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
             String jwt = jwtService.getJwtFromCookies(request);
-            if (jwt != null && jwtService.validateJwtToken(jwt)) {
-                String username = jwtService.getUserNameFromJwtToken(jwt);
+            if (jwt != null) {
+                if (jwtService.validateJwtToken(jwt)) {
+                    String username = jwtService.getUserNameFromJwtToken(jwt);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails,
-                                null,
-                                userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails,
+                                    null,
+                                    userDetails.getAuthorities());
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else if (jwtService.isTokenExpired(jwt)) {
+                    refreshTokenService.refreshToken(request);
+                }
             }
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e);

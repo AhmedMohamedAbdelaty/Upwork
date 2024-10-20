@@ -76,4 +76,21 @@ public class TokenController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @Operation(
+            summary = "Handle token refresh request",
+            description = "Handle token refresh request"
+    )
+    @PostMapping("/handle-refresh-token")
+    public ResponseEntity<?> handleRefreshToken(HttpServletRequest request) {
+        try {
+            return refreshTokenService.refreshToken(request);
+        } catch (TokenRefreshException e) {
+            return ResponseEntity.badRequest().body(ResponseDto.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .success(false)
+                    .data(e.getMessage())
+                    .build());
+        }
+    }
 }
